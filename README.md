@@ -1,3 +1,14 @@
+---
+title: Sehat Sathi
+emoji: 🩺
+colorFrom: green
+colorTo: yellow
+sdk: streamlit
+sdk_version: "1.36.0"
+app_file: src/app.py
+pinned: false
+---
+
 <div align="center">
 
 # 🩺 सेहत साथी — Sehat Sathi
