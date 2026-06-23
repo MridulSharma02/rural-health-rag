@@ -10,7 +10,22 @@ Run with:
 """
 
 import streamlit as st
+import os
 from rag import load_vectorstore, get_llm, answer_question, check_symptoms
+
+VECTORSTORE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vectorstore")
+
+def ensure_vectorstore_downloaded():
+    """Download pre-built vectorstore from HF dataset repo if not present locally."""
+    if os.path.exists(VECTORSTORE_DIR) and os.listdir(VECTORSTORE_DIR):
+        return  # already exists, nothing to do
+
+    from huggingface_hub import snapshot_download
+    snapshot_download(
+        repo_id="MridulSharma02/sehat-sathi-vectorstore",
+        repo_type="dataset",
+        local_dir=VECTORSTORE_DIR,
+    )
 
 # ─────────────────────────────────────────────
 #  PAGE CONFIG
@@ -460,19 +475,12 @@ def load_resources():
     llm = get_llm()
     return vectordb, llm
 
+with st.spinner("🔧 Loading knowledge base..."):
+    ensure_vectorstore_downloaded()
+
 try:
     with st.spinner("🔧 Loading knowledge base..."):
         vectordb, llm = load_resources()
-except FileNotFoundError:
-    with st.spinner("🏗️ First-time setup: building knowledge base from documents (this takes a few minutes)..."):
-        import subprocess
-        import sys
-        result = subprocess.run([sys.executable, "src/ingest.py"], capture_output=True, text=True)
-        if result.returncode != 0:
-            st.error(f"⚠️ Failed to build knowledge base: {result.stderr}")
-            st.stop()
-    st.cache_resource.clear()
-    vectordb, llm = load_resources()
 except ValueError as e:
     st.error(f"⚠️ {e}")
     st.info("Please add your Groq API key to the `.env` file (or Space secrets).")
