@@ -464,11 +464,15 @@ try:
     with st.spinner("🔧 Loading knowledge base..."):
         vectordb, llm = load_resources()
 except FileNotFoundError:
-    st.error(
-        "⚠️ Knowledge base not found! Please run `python src/ingest.py` first "
-        "to process your documents before starting the app."
-    )
-    st.stop()
+    with st.spinner("🏗️ First-time setup: building knowledge base from documents (this takes a few minutes)..."):
+        import subprocess
+        import sys
+        result = subprocess.run([sys.executable, "src/ingest.py"], capture_output=True, text=True)
+        if result.returncode != 0:
+            st.error(f"⚠️ Failed to build knowledge base: {result.stderr}")
+            st.stop()
+    st.cache_resource.clear()
+    vectordb, llm = load_resources()
 except ValueError as e:
     st.error(f"⚠️ {e}")
     st.info("Please add your Groq API key to the `.env` file (or Space secrets).")
